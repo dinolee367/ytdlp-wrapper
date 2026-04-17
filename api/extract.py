@@ -32,7 +32,11 @@ class handler(BaseHTTPRequestHandler):
 
         cookie_file_path = None
         try:
-            ydl_opts = {'quiet': True, 'skip_download': True}
+            ydl_opts = {
+                'quiet': True,
+                'skip_download': True,
+                'extractor_args': {'youtube': {'player_client': ['android']}},
+            }
 
             # Load platform-specific cookies from env
             cookies_b64 = get_cookie_env(url)
