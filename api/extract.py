@@ -5,6 +5,18 @@ import base64
 import tempfile
 import yt_dlp
 
+def get_cookie_env(url):
+    """Pick the right cookie env var based on URL domain."""
+    if 'youtube.com' in url or 'youtu.be' in url:
+        return os.environ.get('YT_COOKIES_B64', '')
+    elif 'facebook.com' in url or 'fb.watch' in url:
+        return os.environ.get('FB_COOKIES_B64', '')
+    elif 'instagram.com' in url:
+        return os.environ.get('IG_COOKIES_B64', '')
+    elif 'tiktok.com' in url:
+        return os.environ.get('TT_COOKIES_B64', '')
+    return ''
+
 class handler(BaseHTTPRequestHandler):
     def do_POST(self):
         content_length = int(self.headers.get('Content-Length', 0))
@@ -22,8 +34,8 @@ class handler(BaseHTTPRequestHandler):
         try:
             ydl_opts = {'quiet': True, 'skip_download': True}
 
-            # Use base64-encoded cookies from environment variable
-            cookies_b64 = os.environ.get('FB_COOKIES_B64', '')
+            # Load platform-specific cookies from env
+            cookies_b64 = get_cookie_env(url)
             if cookies_b64:
                 cookie_content = base64.b64decode(cookies_b64).decode('utf-8')
                 fd, cookie_file_path = tempfile.mkstemp(suffix='.txt')
