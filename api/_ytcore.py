@@ -29,15 +29,17 @@ def _proxy():
 
 
 def _cookiefile(url=""):
-    """Write the YouTube cookies to a temp file for yt-dlp. Matches api/extract.py:
-    base64 in YT_COOKIES_B64 (preferred); also accepts raw YT_COOKIES."""
-    b64 = os.environ.get("YT_COOKIES_B64", "")
+    """Write the YouTube cookies to a temp file for yt-dlp. Accepts raw cookies.txt
+    in YT_COOKIES (simplest — paste the file as-is); else base64 in YT_COOKIES_B64
+    (the var api/extract.py uses). Raw wins so a fresh YT_COOKIES overrides a stale _B64."""
     raw = os.environ.get("YT_COOKIES", "")
-    if b64:
-        try:
-            raw = base64.b64decode(b64).decode("utf-8")
-        except Exception:
-            raw = raw or ""
+    if not raw:
+        b64 = os.environ.get("YT_COOKIES_B64", "")
+        if b64:
+            try:
+                raw = base64.b64decode(b64).decode("utf-8")
+            except Exception:
+                raw = ""
     if not raw:
         return None
     fd, path = tempfile.mkstemp(suffix=".txt")
