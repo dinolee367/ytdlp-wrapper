@@ -1,4 +1,8 @@
 {
   "buildCommand": "",
-  "installCommand": "pip install -r requirements.txt"
+  "installCommand": "pip install -r requirements.txt",
+  "functions": {
+    "api/frame.py": { "maxDuration": 60, "memory": 1024 },
+    "api/captions.py": { "maxDuration": 60, "memory": 1024 }
+  }
 }
