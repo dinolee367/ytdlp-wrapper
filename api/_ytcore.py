@@ -20,8 +20,8 @@
 import os, base64, subprocess, tempfile, re, urllib.request
 
 # Prefer 720p mp4 (video-only DASH is fine — we only need stills); fall back to
-# progressive 360p (itag 18), the most widely available single-file format.
-_FORMAT = "bestvideo[ext=mp4][height<=720]/best[ext=mp4][height<=720]/18"
+# progressive 360p (itag 18), then to whatever single best format exists.
+_FORMAT = "bestvideo[ext=mp4][height<=720]/best[ext=mp4][height<=720]/18/best"
 
 
 def _proxy():
@@ -53,8 +53,8 @@ def _ydl_opts(extra=None):
         "quiet": True,
         "no_warnings": True,
         "skip_download": True,
-        # android player client dodges some of the web bot-checks (same trick as extract.py)
-        "extractor_args": {"youtube": {"player_client": ["android"]}},
+        # With valid cookies the default web client is authenticated and most reliable.
+        # (The old android-client trick now triggers "Requested format is not available".)
     }
     cf = _cookiefile()
     if cf:
