@@ -69,16 +69,29 @@ def _ydl_opts(extra=None):
 
 def resolve_stream_url(video_url):
     """Resolve a YouTube page URL to one seekable media URL. Resolve + frame read
-    must exit on the SAME IP (sticky proxy) or YouTube rejects the signed media URL."""
+    must exit on the SAME IP (sticky proxy) or YouTube rejects the signed media URL.
+
+    On a datacenter IP the default web client often returns only PO-token-gated
+    formats ("Requested format is not available"). iOS/TV/mweb clients sometimes
+    still hand out an ungated progressive format, so we try a spread of clients."""
     import yt_dlp
-    with yt_dlp.YoutubeDL(_ydl_opts({"format": _FORMAT})) as ydl:
-        info = ydl.extract_info(video_url, download=False)
-    if info.get("url"):
-        return info["url"]
-    reqs = info.get("requested_formats") or []
-    if reqs:
-        return reqs[0]["url"]
-    raise RuntimeError("could not resolve a stream URL")
+    last_err = None
+    for clients in (["ios"], ["tv"], ["mweb"], ["web_safari"], ["android"], None):
+        extra = {"format": _FORMAT}
+        if clients:
+            extra["extractor_args"] = {"youtube": {"player_client": clients}}
+        try:
+            with yt_dlp.YoutubeDL(_ydl_opts(extra)) as ydl:
+                info = ydl.extract_info(video_url, download=False)
+            if info.get("url"):
+                return info["url"]
+            reqs = info.get("requested_formats") or []
+            if reqs:
+                return reqs[0]["url"]
+        except Exception as e:
+            last_err = e
+            continue
+    raise RuntimeError("could not resolve a stream URL (all player clients gated): %s" % (last_err,))
 
 
 def _grab_one(ffmpeg, stream_url, t):
