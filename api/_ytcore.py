@@ -142,8 +142,10 @@ def fetch_captions(video_url, preferred_langs=None):
     """Real caption track first (manual > auto, via yt-dlp). Falls back to OpenAI
     Whisper transcription when the video has no caption track at all."""
     import yt_dlp
+    # process=False skips format selection (we only want subtitle tracks), so a
+    # video-format/PO-token problem can't block caption extraction.
     with yt_dlp.YoutubeDL(_ydl_opts()) as ydl:
-        info = ydl.extract_info(video_url, download=False)
+        info = ydl.extract_info(video_url, download=False, process=False)
 
     def pick(tracks):
         if not tracks:
