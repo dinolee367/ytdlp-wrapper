@@ -94,6 +94,32 @@ def resolve_stream_url(video_url):
     raise RuntimeError("could not resolve a stream URL (all player clients gated): %s" % (last_err,))
 
 
+def storyboard_specs(video_url):
+    """Return YouTube storyboard levels (progress-bar preview sprite sheets). These
+    are plain CDN JPEGs, NOT PO-token gated, so they work from a datacenter IP. Each
+    level is a grid of small thumbnails at fixed time intervals across the whole video.
+    Used to gauge whether storyboard frames are high-res enough to be usable."""
+    import yt_dlp
+    with yt_dlp.YoutubeDL(_ydl_opts()) as ydl:
+        info = ydl.extract_info(video_url, download=False, process=False)
+    out = []
+    for f in (info.get("formats") or []):
+        note = (f.get("format_note") or "").lower()
+        fid = str(f.get("format_id") or "")
+        if "storyboard" in note or fid.startswith("sb"):
+            frags = f.get("fragments") or []
+            out.append({
+                "format_id": fid,
+                "tile_w": f.get("width"),
+                "tile_h": f.get("height"),
+                "columns": f.get("columns"),
+                "rows": f.get("rows"),
+                "n_sheets": len(frags),
+                "duration": info.get("duration"),
+            })
+    return {"title": info.get("title"), "duration": info.get("duration"), "storyboards": out}
+
+
 def _grab_one(ffmpeg, stream_url, t):
     # -ss BEFORE -i = fast seek via HTTP range (only bytes near t are fetched).
     cmd = [ffmpeg, "-y", "-ss", str(t), "-i", stream_url,

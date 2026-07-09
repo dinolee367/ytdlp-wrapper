@@ -12,7 +12,7 @@ import os, sys, json
 from http.server import BaseHTTPRequestHandler
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _ytcore import resolve_stream_url, grab_frames
+from _ytcore import resolve_stream_url, grab_frames, storyboard_specs
 
 
 class handler(BaseHTTPRequestHandler):
@@ -21,7 +21,7 @@ class handler(BaseHTTPRequestHandler):
         self.send_response(code)
         self.send_header("Content-Type", "application/json")
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("X-Build", "4")
+        self.send_header("X-Build", "5")
         self.end_headers()
         self.wfile.write(body)
 
@@ -39,6 +39,8 @@ class handler(BaseHTTPRequestHandler):
             url = data.get("url")
             if not url:
                 return self._send(400, {"ok": False, "error": "missing 'url'"})
+            if data.get("debug") == "sb":   # diagnostic: report storyboard resolutions
+                return self._send(200, {"ok": True, **storyboard_specs(url)})
             ts = data.get("ts")
             if ts is None:
                 ts = [data.get("t", 0)]
